@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>초·중·고 전 과목 성적 향상 스터디 플래너 (2022 개정 교육과정 반영)</title>
+  <style>
+    /* =========================================
+       1. 기본 설정 및 과목군별 파스텔 색상 변수
+       ========================================= */
+    :root {
+      --bg-color: #f4f7fb;
+      --card-bg: #ffffff;
+      --text-main: #2b3445;
+      --text-muted: #7d879c;
+      --border-color: #e6ebf2;
+
+      /* 1순위: 주요 과목 (국·영·수) */
+      --kor-bg: #e8f2ff; --kor-border: #6ba8ff; --kor-text: #1f5cb8;
+      --math-bg: #e6f9f0; --math-border: #4cd08d; --math-text: #177a48;
+      --eng-bg: #f3ebff; --eng-border: #9f75ff; --eng-text: #5628b4;
+
+      /* 2순위: 내신 핵심 탐구·암기 과목 (사/역·과·도·정·기가) */
+      --sci-bg: #fff4e5; --sci-border: #ffb347; --sci-text: #9c5700;
+      --soc-bg: #fef3c7; --soc-border: #f59e0b; --soc-text: #92400e;
+      --info-bg: #e0f2fe; --info-border: #38bdf8; --info-text: #0369a1;
+
+      /* 3순위: 기타 과목 (음·미·체·실과·한문·제2외국어·통합·창체) */
+      --etc-bg: #fff0f6; --etc-border: #ff85c0; --etc-text: #a82060;
+
+      /* 신호등(메타인지) 컬러 */
+      --sig-red-bg: #ffeef0; --sig-red-text: #d92d20;
+      --sig-yel-bg: #fff8e6; --sig-yel-text: #b54708;
+      --sig-grn-bg: #e8fcf1; --sig-grn-text: #067647;
+
+      --radius: 14px;
+      --shadow: 0 8px 24px rgba(43, 52, 69, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 20px 16px 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* =========================================
+       2. 학년 선택 탭 (순수 CSS :checked 활용)
+       ========================================= */
+    .tab-radio {
+      display: none;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .grade-switcher {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: #e9eef6;
+      padding: 6px;
+      border-radius: 14px;
+      min-width: 300px;
+    }
+
+    .grade-tab-label {
+      text-align: center;
+      padding: 11px 10px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #5a657d;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .grade-tab-label:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    #tab-elem:checked ~ .top-bar .grade-switcher label[for="tab-elem"] {
+      background: #ffffff;
+      color: #d97706;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    }
+
+    #tab-mid:checked ~ .top-bar .grade-switcher label[for="tab-mid"] {
+      background: #ffffff;
+      color: #0284c7;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    }
+
+    #tab-high:checked ~ .top-bar .grade-switcher label[for="tab-high"] {
+      background: #ffffff;
+      color: #4f46e5;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    }
+
+    .utility-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .util-btn {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .util-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .planner-view {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #tab-elem:checked ~ #view-elem,
+    #tab-mid:checked ~ #view-mid,
+    #tab-high:checked ~ #view-high {
+      display: flex;
+    }
+
+    #view-elem {
+      --theme-primary: #f59e0b;
+      --theme-soft: #fffbeb;
+      --theme-border: #fde68a;
+      --theme-dark: #92400e;
+    }
+
+    #view-mid {
+      --theme-primary: #0284c7;
+      --theme-soft: #f0f9ff;
+      --theme-border: #bae6fd;
+      --theme-dark: #075985;
+    }
+
+    #view-high {
+      --theme-primary: #4f46e5;
+      --theme-soft: #eef2ff;
+      --theme-border: #c7d2fe;
+      --theme-dark: #312e81;
+    }
+
+    /* =========================================
+       3. 공통 카드, 헤더 & 전 과목 비중 배너
+       ========================================= */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      border: 1px solid var(--border-color);
+    }
+
+    .header-card {
+      background: linear-gradient(135deg, #ffffff 0%, var(--theme-soft) 100%);
+      border-color: var(--theme-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand-logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--theme-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .dday-badge {
+      background: var(--theme-primary);
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    .daily-promise {
+      font-size: 0.9rem;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.92);
+      padding: 7px 12px;
+      border-radius: 8px;
+      border-left: 4px solid var(--theme-primary);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* 원클릭 뽀모도로 타이머 박스 */
+    .timer-widget {
+      background: #ffffff;
+      border: 1px solid var(--theme-border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .timer-info { display: flex; flex-direction: column; }
+    .timer-label { font-size: 0.74rem; font-weight: 700; color: var(--theme-dark); }
+    .timer-display { font-size: 1.45rem; font-weight: 800; color: var(--theme-primary); font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .timer-controls { display: flex; gap: 6px; }
+    .timer-btn { border: none; border-radius: 8px; padding: 7px 11px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+    .timer-btn-start { background: var(--theme-primary); color: #ffffff; }
+    .timer-btn-reset { background: #f1f5f9; color: #475569; }
+
+    /* =========================================
+       4. 2022 개정 교육과정 전 과목 편제 & 공부 비중 카드
+       ========================================= */
+    .curriculum-card {
+      padding: 18px 22px;
+      background: #ffffff;
+    }
+
+    .weight-bar-wrap {
+      margin: 10px 0 14px;
+    }
+
+    .weight-bar {
+      display: flex;
+      height: 26px;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .wb-major {
+      background: linear-gradient(90deg, #3b82f6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wb-core {
+      background: linear-gradient(90deg, #10b981, #f59e0b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wb-etc {
+      background: linear-gradient(90deg, #ec4899, #f472b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tier-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1.15fr 0.9fr;
+      gap: 12px;
+    }
+
+    .tier-box {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #fafbfd;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tier-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .tier-weight-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .subject-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .subj-chip {
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+    }
+
+    .chip-major { background: var(--kor-bg); color: var(--kor-text); border-color: #bfd9ff; font-weight: 700; }
+    .chip-math { background: var(--math-bg); color: var(--math-text); border-color: #a6ebc9; font-weight: 700; }
+    .chip-eng { background: var(--eng-bg); color: var(--eng-text); border-color: #d6c2ff; font-weight: 700; }
+    .chip-core { background: var(--sci-bg); color: var(--sci-text); border-color: #ffd89e; }
+    .chip-info { background: var(--info-bg); color: var(--info-text); border-color: #bae6fd; }
+    .chip-etc { background: var(--etc-bg); color: var(--etc-text); border-color: #ffadd2; }
+
+    .tier-desc {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .edit-hint {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    [contenteditable="true"] {
+      outline: none;
+      border-radius: 4px;
+      padding: 1px 4px;
+    }
+
+    [contenteditable="true"]:hover,
+    [contenteditable="true"]:focus {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .section-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .section-subtitle {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* =========================================
+       5. 반응형 레이아웃
+       ========================================= */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.06fr 0.94fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .booster-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 980px) {
+      .tier-grid,
+      .booster-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 767px) {
+      body { padding: 12px 10px 44px; }
+      .grade-tab-label { font-size: 0.82rem; padding: 9px 4px; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .header-card { flex-direction: column; align-items: flex-start; }
+      .timer-widget { width: 100%; justify-content: space-between; }
+    }
+
+    /* =========================================
+       6. 타임블록 시간표 (CSS Grid)
+       ========================================= */
+    .subject-legend {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .timetable {
+      display: grid;
+      grid-template-columns: 62px 1fr;
+      row-gap: 7px;
+      column-gap: 10px;
+      align-items: center;
+    }
+
+    .time-label {
+      font-size: 0.79rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .time-slot {
+      min-height: 41px;
+      border-radius: 10px;
+      padding: 7px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.87rem;
+      font-weight: 600;
+      border-left: 4px solid transparent;
+    }
+
+    .slot-tag {
+      font-size: 0.71rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.8);
+      flex-shrink: 0;
+    }
+
+    .slot-kor { background-color: var(--kor-bg); border-left-color: var(--kor-border); color: var(--kor-text); }
+    .slot-math { background-color: var(--math-bg); border-left-color: var(--math-border); color: var(--math-text); }
+    .slot-eng { background-color: var(--eng-bg); border-left-color: var(--eng-border); color: var(--eng-text); }
+    .slot-sci { background-color: var(--sci-bg); border-left-color: var(--sci-border); color: var(--sci-text); }
+    .slot-info { background-color: var(--info-bg); border-left-color: var(--info-border); color: var(--info-text); }
+    .slot-habit { background-color: var(--etc-bg); border-left-color: var(--etc-border); color: var(--etc-text); }
+    .slot-rest { background-color: #f6f8fa; border: 1px dashed #d3dae6; color: var(--text-muted); font-weight: 500; }
+
+    /* =========================================
+       7. 할 일 체크리스트 (:checked 취소선 + 전 과목 선택 추가)
+       ========================================= */
+    .todo-rate-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--theme-primary);
+      background: var(--theme-soft);
+      border: 1px solid var(--theme-border);
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    .todo-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      background: #f9fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 9px 12px;
+    }
+
+    .todo-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--theme-primary);
+      cursor: pointer;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+
+    .todo-label {
+      flex: 1;
+      font-size: 0.89rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .todo-badges {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .todo-time-pill {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #64748b;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .todo-subject-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .todo-checkbox:checked + .todo-label .todo-text {
+      text-decoration: line-through;
+      color: #a0aab8;
+    }
+
+    .todo-checkbox:checked + .todo-label .todo-badges {
+      opacity: 0.45;
+    }
+
+    /* 전 과목 선택 드롭다운 + 할 일 추가 바 */
+    .todo-add-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .todo-subj-select {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #f8fafc;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .todo-add-input {
+      flex: 1;
+      min-width: 160px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.84rem;
+      outline: none;
+    }
+
+    .todo-add-input:focus {
+      border-color: var(--theme-primary);
+    }
+
+    .todo-add-btn {
+      background: var(--theme-primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* =========================================
+       8. 과목군별 진도율 & 기타과목 수행/실기 미니 체크
+       ========================================= */
+    .progress-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .progress-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 9px;
+      background-color: #edf1f7;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill { height: 100%; border-radius: 999px; }
+    .fill-kor { background: linear-gradient(90deg, #6ba8ff, #3b82f6); }
+    .fill-math { background: linear-gradient(90deg, #4cd08d, #2eb872); }
+    .fill-eng { background: linear-gradient(90deg, #9f75ff, #7b4dff); }
+    .fill-sci { background: linear-gradient(90deg, #ffb347, #f59e0b); }
+    .fill-info { background: linear-gradient(90deg, #38bdf8, #0284c7); }
+
+    /* 기타 과목 수행·실기 놓침 방지 박스 */
+    .etc-check-box {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .etc-check-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--etc-text);
+    }
+
+    .etc-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .etc-pill-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 8px;
+      background: var(--etc-bg);
+      color: var(--etc-text);
+      border: 1px solid #ffd6e7;
+      cursor: pointer;
+    }
+
+    .etc-pill-label input {
+      accent-color: #eb2f96;
+      cursor: pointer;
+    }
+
+    /* =========================================
+       9. 하단 성적 향상 3대 부스터
+       ========================================= */
+    .signal-list, .wrong-list, .recall-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .signal-item, .wrong-card {
+      background: #f9fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .signal-topic, .wrong-title {
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .signal-radios {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .sig-radio, .reason-chk, .mood-radio { display: none; }
+
+    .sig-label {
+      text-align: center;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 5px 4px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .sig-radio.sig-r:checked + .sig-label { background: var(--sig-red-bg); color: var(--sig-red-text); border-color: #fda29b; }
+    .sig-radio.sig-y:checked + .sig-label { background: var(--sig-yel-bg); color: var(--sig-yel-text); border-color: #fec84b; }
+    .sig-radio.sig-g:checked + .sig-label { background: var(--sig-grn-bg); color: var(--sig-grn-text); border-color: #6ce9a6; }
+
+    .wrong-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .reason-group, .cycle-checks, .mood-options {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .reason-lbl {
+      font-size: 0.71rem;
+      font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: #ffffff;
+      border: 1px solid #d0d7e2;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .reason-chk:checked + .reason-lbl {
+      background: #fff1f2;
+      color: #e11d48;
+      border-color: #fda4af;
+      font-weight: 700;
+    }
+
+    .cycle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: var(--theme-dark);
+      background: var(--theme-soft);
+      border: 1px solid var(--theme-border);
+      padding: 2px 7px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .recall-textarea {
+      width: 100%;
+      min-height: 90px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      resize: vertical;
+      outline: none;
+    }
+
+    .review-alert {
+      background: var(--theme-soft);
+      border: 1px solid var(--theme-border);
+      border-radius: 10px;
+      padding: 11px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .review-badge {
+      align-self: flex-start;
+      background: #ffffff;
+      color: var(--theme-primary);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--theme-border);
+    }
+
+    .review-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--theme-dark);
+    }
+
+    details.quiz-drawer {
+      background: #ffffff;
+      border: 1px dashed var(--theme-border);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 0.82rem;
+    }
+
+    details.quiz-drawer summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--theme-primary);
+    }
+
+    details.quiz-drawer .quiz-answer {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .mood-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .mood-title { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); }
+    .mood-label { font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-color); background: #f8fafc; cursor: pointer; }
+    .mood-radio:checked + .mood-label { background: var(--theme-primary); color: #ffffff; border-color: var(--theme-primary); }
+
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .top-bar, .todo-add-row, .timer-controls { display: none; }
+      .card { box-shadow: none; border: 1px solid #cccccc; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 학년 전환용 라디오 버튼 -->
+    <input type="radio" name="grade-tab" id="tab-elem" class="tab-radio" checked />
+    <input type="radio" name="grade-tab" id="tab-mid" class="tab-radio" />
+    <input type="radio" name="grade-tab" id="tab-high" class="tab-radio" />
+
+    <!-- 상단 학년 전환 바 & 인쇄 버튼 -->
+    <div class="top-bar">
+      <nav class="grade-switcher" aria-label="학년별 플래너 선택">
+        <label for="tab-elem" class="grade-tab-label">🎒 초등학생용 (전 과목 기초·습관)</label>
+        <label for="tab-mid" class="grade-tab-label">🏫 중학생용 (전 과목 내신·수행)</label>
+        <label for="tab-high" class="grade-tab-label">🎓 고등학생용 (수능·고교학점제 전 과목)</label>
+      </nav>
+      <div class="utility-btns">
+        <button type="button" class="util-btn" onclick="window.print()">🖨️ 종이 플래너로 인쇄</button>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         [1] 🎒 초등학생용 스터디 플래너 (2022 개정 초등 전 과목 반영)
+         ========================================================= -->
+    <div id="view-elem" class="planner-view">
+      <header class="card header-card">
+        <div class="brand-group">
+          <div class="brand-top">
+            <h1 class="brand-logo">🌱 초등 전 과목 바른습관 플래너</h1>
+            <span class="dday-badge" contenteditable="true">🌟 목표: 단원평가 & 수행평가 참 잘했어요!</span>
+          </div>
+          <div class="daily-promise">
+            ✨ 오늘의 약속:
+            <span contenteditable="true">"국어·수학·영어 매일 꾸준히 하고, 사회·과학·예체능 준비물도 스스로 챙기기!"</span>
+            <span class="edit-hint">(클릭해 수정)</span>
+          </div>
+        </div>
+
+        <div class="timer-widget">
+          <div class="timer-info">
+            <span class="timer-label">🍅 초등 15분 집중 타이머</span>
+            <span class="timer-display" id="timer-elem">15:00</span>
+          </div>
+          <div class="timer-controls">
+            <button type="button" class="timer-btn timer-btn-start" onclick="toggleTimer('elem', 15)">▶ 시작/일시정지</button>
+            <button type="button" class="timer-btn timer-btn-reset" onclick="resetTimer('elem', 15)">↺ 리셋</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 초등 교육과정 전 과목 편제 & 추천 공부 비중 -->
+      <section class="card curriculum-card">
+        <h2 class="section-title">
+          <span>📚 초등학교 전 과목 공부 비중 가이드 (2022 개정 교육과정)</span>
+          <span class="edit-hint">주요 과목은 매일, 암기·기타 과목은 수업 날 복습해요!</span>
+        </h2>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar">
+            <div class="wb-major" style="width: 60%;">🏆 1순위 주요 과목 (60%)</div>
+            <div class="wb-core" style="width: 25%;">⭐ 2순위 단원평가 중요 과목 (25%)</div>
+            <div class="wb-etc" style="width: 15%;">🎨 3순위 기타·통합 (15%)</div>
+          </div>
+        </div>
+        <div class="tier-grid">
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>🏆 1순위: 주요 핵심 과목 (매일 공부)</span>
+              <span class="tier-weight-pill chip-major">비중 60%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-major">📘 국어 (독서·어휘·쓰기)</span>
+              <span class="subj-chip chip-math">📗 수학 (연산·도형·익힘책)</span>
+              <span class="subj-chip chip-eng">📕 영어 (파닉스·단어·회화)</span>
+            </div>
+            <p class="tier-desc">기초 학력의 뿌리! 매일 15~20분씩 빠지지 않고 공부하는 가장 중요한 과목이에요.</p>
+          </div>
+
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>⭐ 2순위: 단원평가 중요 과목 (주 2~3회)</span>
+              <span class="tier-weight-pill chip-core">비중 25%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-core">🌍 사회 (지리·역사·우리 지역)</span>
+              <span class="subj-chip chip-core">🔬 과학 (실험관찰·탐구 개념)</span>
+              <span class="subj-chip chip-info">💻 실과·정보 (코딩·AI 디지털·생활기술)</span>
+            </div>
+            <p class="tier-desc">3~6학년 단원평가에서 점수 차이가 가장 크게 나는 과목! 그림과 용어를 중심으로 복습해요.</p>
+          </div>
+
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>🎨 3순위: 그 외 기타·통합·예체능</span>
+              <span class="tier-weight-pill chip-etc">비중 15%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-etc">🌱 바른·슬기로운·즐거운생활 (1~2학년)</span>
+              <span class="subj-chip chip-etc">💛 도덕</span>
+              <span class="subj-chip chip-etc">🎵 음악</span>
+              <span class="subj-chip chip-etc">🎨 미술</span>
+              <span class="subj-chip chip-etc">⚽ 체육</span>
+              <span class="subj-chip chip-etc">🧭 학교자율시간·창체</span>
+            </div>
+            <p class="tier-desc">실기 수행평가(리코더·줄넘기·그리기)와 준비물만 잘 챙겨도 만점을 받을 수 있어요!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 상단 2단: 시간표 + 할 일 체크리스트 -->
+      <main class="dashboard-grid">
+        <section class="card">
+          <h2 class="section-title">
+            <span>⏰ 방과 후 균형 시간표 (13:00 ~ 21:00)</span>
+            <span class="edit-hint">클릭해 수정</span>
+          </h2>
+          <p class="section-subtitle">주요 과목(국·수·영)을 중심에 두고 사회·과학·예체능을 골고루 배치했어요.</p>
+
+          <div class="subject-legend">
+            <span class="legend-item slot-kor"><span class="legend-dot" style="background: var(--kor-border);"></span>국어</span>
+            <span class="legend-item slot-math"><span class="legend-dot" style="background: var(--math-border);"></span>수학</span>
+            <span class="legend-item slot-eng"><span class="legend-dot" style="background: var(--eng-border);"></span>영어</span>
+            <span class="legend-item slot-sci"><span class="legend-dot" style="background: var(--sci-border);"></span>사회·과학</span>
+            <span class="legend-item slot-habit"><span class="legend-dot" style="background: var(--etc-border);"></span>도덕·실과·예체능</span>
+          </div>
+
+          <div class="timetable">
+            <div class="time-label">13:00</div>
+            <div class="time-slot slot-rest"><span contenteditable="true">🏫 하교 후 손 씻고 간식 먹으며 알림장 확인</span><span class="slot-tag">휴식</span></div>
+            <div class="time-label">14:00</div>
+            <div class="time-slot slot-math"><span contenteditable="true">[주요] 수학 익힘책 2쪽 풀고 연산 연습하기</span><span class="slot-tag">수학(주요)</span></div>
+            <div class="time-label">15:00</div>
+            <div class="time-slot slot-eng"><span contenteditable="true">[주요] 영어 단어 5개 소리 내어 읽고 따라 쓰기</span><span class="slot-tag">영어(주요)</span></div>
+            <div class="time-label">16:00</div>
+            <div class="time-slot slot-sci"><span contenteditable="true">[중요] 과학 실험관찰 정리 & 사회 핵심 용어 밑줄 긋기</span><span class="slot-tag">사회·과학</span></div>
+            <div class="time-label">17:00</div>
+            <div class="time-slot slot-habit"><span contenteditable="true">[기타] 체육 줄넘기 연습 / 음악 리코더·미술 활동</span><span class="slot-tag">예체능</span></div>
+            <div class="time-label">18:00</div>
+            <div class="time-slot slot-rest"><span contenteditable="true">🍚 가족과 함께 맛있는 저녁 식사</span><span class="slot-tag">식사</span></div>
+            <div class="time-label">19:00</div>
+            <div class="time-slot slot-kor"><span contenteditable="true">[주요] 국어 교과서 지문 읽기 & 독서록 3줄 쓰기</span><span class="slot-tag">국어(주요)</span></div>
+            <div class="time-label">20:00</div>
+            <div class="time-slot slot-habit"><span contenteditable="true">[기타] 도덕·실과(코딩) 복습 및 내일 준비물 챙기기</span><span class="slot-tag">실과·습관</span></div>
+            <div class="time-label">21:00</div>
+            <div class="time-slot slot-rest"><span contenteditable="true">🌙 양치질하고 일찍 잠자리 들기</span><span class="slot-tag">취침</span></div>
+          </div>
+        </section>
+
+        <div class="right-column">
+          <section class="card">
+            <h2 class="section-title">
+              <span>✅ 오늘의 전 과목 체크리스트</span>
+              <span class="todo-rate-badge" id="rate-elem">달성률 33%</span>
+            </h2>
+            <p class="section-subtitle">주요 과목을 먼저 끝내고 단원평가·기타 과목까지 체크해 보세요!</p>
+
+            <ul class="todo-list" id="todo-list-elem">
+              <li class="todo-item">
+                <input type="checkbox" id="el-t1" class="todo-checkbox" onchange="updateRate('elem')" checked />
+                <label for="el-t1" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[수학] 분수의 덧셈 익힘책 2쪽 풀고 틀린 문제 고치기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">★ 1순위 주요</span><span class="todo-subject-pill slot-math">수학</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="el-t2" class="todo-checkbox" onchange="updateRate('elem')" checked />
+                <label for="el-t2" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[국어] 동화책 20쪽 읽고 중심 문장 찾아 밑줄 긋기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">★ 1순위 주요</span><span class="todo-subject-pill slot-kor">국어</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="el-t3" class="todo-checkbox" onchange="updateRate('elem')" />
+                <label for="el-t3" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[영어] 오늘 배운 알파벳·영단어 5개 큰 소리로 읽기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">★ 1순위 주요</span><span class="todo-subject-pill slot-eng">영어</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="el-t4" class="todo-checkbox" onchange="updateRate('elem')" />
+                <label for="el-t4" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[사회·과학] 실험관찰 공책 빈칸 채우고 사회 지도 살펴보기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">⭐ 단원평가</span><span class="todo-subject-pill slot-sci">사·과</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="el-t5" class="todo-checkbox" onchange="updateRate('elem')" />
+                <label for="el-t5" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[실과·정보] 엔트리 블록 코딩 순서도 퀴즈 풀어보기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">💻 디지털</span><span class="todo-subject-pill slot-info">실과</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="el-t6" class="todo-checkbox" onchange="updateRate('elem')" />
+                <label for="el-t6" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[음·미·체·도덕] 내일 미술 준비물(색연필) & 음악 리코더 챙기기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🎨 기타과목</span><span class="todo-subject-pill slot-habit">예체능</span></span>
+                </label>
+              </li>
+            </ul>
+
+            <!-- 초등 전 과목 선택 추가 바 -->
+            <div class="todo-add-row">
+              <select id="subj-select-elem" class="todo-subj-select" aria-label="초등 과목 선택">
+                <optgroup label="🏆 1순위 주요 과목">
+                  <option value="국어|slot-kor">📘 국어</option>
+                  <option value="수학|slot-math">📗 수학</option>
+                  <option value="영어|slot-eng">📕 영어</option>
+                </optgroup>
+                <optgroup label="⭐ 2순위 단원평가 중요 과목">
+                  <option value="사회|slot-sci">🌍 사회</option>
+                  <option value="과학|slot-sci">🔬 과학</option>
+                  <option value="실과·정보|slot-info">💻 실과·정보</option>
+                </optgroup>
+                <optgroup label="🎨 3순위 기타·통합·예체능">
+                  <option value="도덕|slot-habit">💛 도덕</option>
+                  <option value="바·슬·즐|slot-habit">🌱 바른·슬기·즐거운생활</option>
+                  <option value="음악|slot-habit">🎵 음악</option>
+                  <option value="미술|slot-habit">🎨 미술</option>
+                  <option value="체육|slot-habit">⚽ 체육</option>
+                  <option value="창체·자율|slot-habit">🧭 학교자율·창체</option>
+                </optgroup>
+              </select>
+              <input type="text" id="add-input-elem" class="todo-add-input" placeholder="할 일을 적고 추가를 누르세요" onkeydown="if(event.key==='Enter') addTodo('elem')" />
+              <button type="button" class="todo-add-btn" onclick="addTodo('elem')">추가</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="section-title">📊 과목군별 달성률 & 기타 과목 수행 체크</h2>
+            <p class="section-subtitle">주요 과목 진도율과 놓치기 쉬운 예체능·기타 과목을 함께 챙겨요!</p>
+            <div class="progress-list">
+              <div class="progress-item">
+                <div class="progress-header"><span>🏆 주요 과목 (국어·수학·영어 기초)</span><span style="color: var(--kor-text);">85%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-kor" style="width: 85%;"></div></div>
+              </div>
+              <div class="progress-item">
+                <div class="progress-header"><span>⭐ 단원평가 중요 과목 (사회·과학·실과)</span><span style="color: var(--sci-text);">75%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-sci" style="width: 75%;"></div></div>
+              </div>
+            </div>
+
+            <div class="etc-check-box">
+              <span class="etc-check-title">🎨 기타 과목 실기·수행·준비물 한눈에 체크 (클릭!)</span>
+              <div class="etc-pills">
+                <label class="etc-pill-label"><input type="checkbox" checked />🎵 음악(리코더·가창)</label>
+                <label class="etc-pill-label"><input type="checkbox" checked />🎨 미술(준비물 챙김)</label>
+                <label class="etc-pill-label"><input type="checkbox" />⚽ 체육(줄넘기 급수)</label>
+                <label class="etc-pill-label"><input type="checkbox" />💛 도덕(실천 일기)</label>
+                <label class="etc-pill-label"><input type="checkbox" />🌱 바·슬·즐(통합교과)</label>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- 하단 3단: 초등 성적 향상 부스터 -->
+      <section class="booster-grid">
+        <div class="card">
+          <h3 class="section-title">🚦 1. 전 과목 신호등 자기점검</h3>
+          <p class="section-subtitle">주요 과목부터 사회·과학까지 이해도를 신호등으로 표시해요!</p>
+          <div class="signal-list">
+            <div class="signal-item">
+              <span class="signal-topic" contenteditable="true">[수학] 분모가 같은 분수의 덧셈과 뺄셈</span>
+              <div class="signal-radios">
+                <input type="radio" name="el-sig-1" id="el-s1-r" class="sig-radio sig-r" /><label for="el-s1-r" class="sig-label">🔴 어려워요</label>
+                <input type="radio" name="el-sig-1" id="el-s1-y" class="sig-radio sig-y" /><label for="el-s1-y" class="sig-label">🟡 헷갈려요</label>
+                <input type="radio" name="el-sig-1" id="el-s1-g" class="sig-radio sig-g" checked /><label for="el-s1-g" class="sig-label">🟢 설명 가능!</label>
+              </div>
+            </div>
+            <div class="signal-item">
+              <span class="signal-topic" contenteditable="true">[과학] 자석의 극과 나침반 바늘이 가리키는 방향</span>
+              <div class="signal-radios">
+                <input type="radio" name="el-sig-2" id="el-s2-r" class="sig-radio sig-r" /><label for="el-s2-r" class="sig-label">🔴 어려워요</label>
+                <input type="radio" name="el-sig-2" id="el-s2-y" class="sig-radio sig-y" checked /><label for="el-s2-y" class="sig-label">🟡 헷갈려요</label>
+                <input type="radio" name="el-sig-2" id="el-s2-g" class="sig-radio sig-g" /><label for="el-s2-g" class="sig-label">🟢 설명 가능!</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">🛠️ 2. 아차! 틀린 문제 3번 복습</h3>
+          <p class="section-subtitle">왜 틀렸는지 찍어보고 1차·2차·완료까지 세 번 다시 풀어봐요!</p>
+          <div class="wrong-list">
+            <div class="wrong-card">
+              <span class="wrong-title" contenteditable="true">[수학] 가분수를 대분수로 고치기 계산</span>
+              <div class="wrong-meta-row">
+                <div class="reason-group">
+                  <input type="checkbox" id="el-r1" class="reason-chk" checked /><label for="el-r1" class="reason-lbl">계산 실수</label>
+                  <input type="checkbox" id="el-r2" class="reason-chk" /><label for="el-r2" class="reason-lbl">문제 안 읽음</label>
+                </div>
+                <div class="cycle-checks">
+                  <label class="cycle-label"><input type="checkbox" checked />1차</label>
+                  <label class="cycle-label"><input type="checkbox" />2차</label>
+                  <label class="cycle-label"><input type="checkbox" />완료</label>
+                </div>
+              </div>
+            </div>
+            <div class="wrong-card">
+              <span class="wrong-title" contenteditable="true">[사회] 고장의 문화유산과 지도 기호 구분하기</span>
+              <div class="wrong-meta-row">
+                <div class="reason-group">
+                  <input type="checkbox" id="el-r3" class="reason-chk" checked /><label for="el-r3" class="reason-lbl">용어 헷갈림</label>
+                </div>
+                <div class="cycle-checks">
+                  <label class="cycle-label"><input type="checkbox" checked />1차</label>
+                  <label class="cycle-label"><input type="checkbox" checked />2차</label>
+                  <label class="cycle-label"><input type="checkbox" />완료</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">🧠 3. 책 덮고 한 줄 기억하기</h3>
+          <p class="section-subtitle">오늘 공부한 내용을 안 보고 한 줄로 적어본 뒤 정답을 열어보세요!</p>
+          <div class="recall-box">
+            <textarea class="recall-textarea" placeholder="오늘 배운 국어·수학·사회·과학 핵심을 책을 덮고 적어보세요!"></textarea>
+            <div class="review-alert">
+              <span class="review-badge">💡 오늘의 깜짝 복습 퀴즈</span>
+              <p class="review-title">Q. 자석의 N극과 S극을 가까이 가져가면 어떻게 될까요?</p>
+              <details class="quiz-drawer">
+                <summary>👉 클릭해서 정답 확인하기</summary>
+                <div class="quiz-answer"><strong>정답:</strong> 서로 <strong>다른 극(N극과 S극)끼리는 서로 끌어당기고</strong>, 같은 극끼리는 서로 밀어내요! 👏</div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- =========================================================
+         [2] 🏫 중학생용 스터디 플래너 (2022 개정 중등 전 과목 내신 반영)
+         ========================================================= -->
+    <div id="view-mid" class="planner-view">
+      <header class="card header-card">
+        <div class="brand-group">
+          <div class="brand-top">
+            <h1 class="brand-logo">📘 중등 전 과목 내신 A등급 플래너</h1>
+            <span class="dday-badge" contenteditable="true">D-14 기말고사 (주요과목 + 내신 암기과목 올A!)</span>
+          </div>
+          <div class="daily-promise">
+            ✨ 오늘의 다짐:
+            <span contenteditable="true">"국·영·수 기본기를 다지고, 사·과·역·도·기가·정보까지 빈틈없이 챙기기!"</span>
+            <span class="edit-hint">(클릭해 수정)</span>
+          </div>
+        </div>
+
+        <div class="timer-widget">
+          <div class="timer-info">
+            <span class="timer-label">🍅 중등 25분 뽀모도로 타이머</span>
+            <span class="timer-display" id="timer-mid">25:00</span>
+          </div>
+          <div class="timer-controls">
+            <button type="button" class="timer-btn timer-btn-start" onclick="toggleTimer('mid', 25)">▶ 시작/일시정지</button>
+            <button type="button" class="timer-btn timer-btn-reset" onclick="resetTimer('mid', 25)">↺ 리셋</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 중학교 교육과정 전 과목 편제 & 추천 공부 비중 -->
+      <section class="card curriculum-card">
+        <h2 class="section-title">
+          <span>📚 중학교 전 과목 내신 전략 & 공부 비중 (2022 개정 교육과정)</span>
+          <span class="edit-hint">국·영·수 중심으로 공부하되 내신 평균을 좌우하는 암기·기타 과목을 놓치지 마세요!</span>
+        </h2>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar">
+            <div class="wb-major" style="width: 55%;">🏆 1순위 주요 과목 국·영·수 (55%)</div>
+            <div class="wb-core" style="width: 30%;">⭐ 2순위 내신 A등급 결정 과목 (30%)</div>
+            <div class="wb-etc" style="width: 15%;">🎨 3순위 선택·예체능 (15%)</div>
+          </div>
+        </div>
+        <div class="tier-grid">
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>🏆 1순위: 주요 핵심 과목 (상시 집중)</span>
+              <span class="tier-weight-pill chip-major">비중 55%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-major">📘 국어 (문학·문법·비문학)</span>
+              <span class="subj-chip chip-math">📗 수학 (대수·함수·기하)</span>
+              <span class="subj-chip chip-eng">📕 영어 (본문 암기·핵심 문법)</span>
+            </div>
+            <p class="tier-desc">지필고사와 서술형 배점이 가장 높고 고등학교 성적까지 직결되는 최우선 과목입니다.</p>
+          </div>
+
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>⭐ 2순위: 내신 평균 견인 중요 과목</span>
+              <span class="tier-weight-pill chip-core">비중 30%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-core">🔬 과학 (물·화·생·지 실험)</span>
+              <span class="subj-chip chip-core">🏛️ 역사 (한국사·세계사)</span>
+              <span class="subj-chip chip-core">🌍 사회 (지리·일반사회)</span>
+              <span class="subj-chip chip-core">💛 도덕</span>
+              <span class="subj-chip chip-info">💻 정보 (코딩·AI 필수확대)</span>
+              <span class="subj-chip chip-info">🛠️ 기술·가정</span>
+            </div>
+            <p class="tier-desc">학교 프린트물과 교과서 회독만 탄탄히 해도 90점(A등급) 이상을 확실히 확보할 수 있는 전략 과목!</p>
+          </div>
+
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>🎨 3순위: 그 외 기타·선택·예체능</span>
+              <span class="tier-weight-pill chip-etc">비중 15%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-etc">📜 한문</span>
+              <span class="subj-chip chip-etc">🗣️ 생활외국어 (일본어·중국어)</span>
+              <span class="subj-chip chip-etc">🎵 음악</span>
+              <span class="subj-chip chip-etc">🎨 미술</span>
+              <span class="subj-chip chip-etc">⚽ 체육</span>
+              <span class="subj-chip chip-etc">🌿 환경·보건·진로와 직업</span>
+            </div>
+            <p class="tier-desc">한문·생활외국어 암기와 음·미·체 수행평가 감점만 막아도 전 과목 올A를 달성할 수 있습니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <main class="dashboard-grid">
+        <section class="card">
+          <h2 class="section-title">
+            <span>⏰ 방과 후 내신 최적화 타임블록 (15:00 ~ 23:00)</span>
+            <span class="edit-hint">클릭해 수정</span>
+          </h2>
+          <p class="section-subtitle">주요 과목(국·영·수)과 내신 중요 과목(사·과·역·기가·정보), 기타 과목을 균형 배치했습니다.</p>
+
+          <div class="subject-legend">
+            <span class="legend-item slot-kor"><span class="legend-dot" style="background: var(--kor-border);"></span>국어</span>
+            <span class="legend-item slot-math"><span class="legend-dot" style="background: var(--math-border);"></span>수학</span>
+            <span class="legend-item slot-eng"><span class="legend-dot" style="background: var(--eng-border);"></span>영어</span>
+            <span class="legend-item slot-sci"><span class="legend-dot" style="background: var(--sci-border);"></span>과학·사회·역사·도덕</span>
+            <span class="legend-item slot-info"><span class="legend-dot" style="background: var(--info-border);"></span>정보·기술가정</span>
+            <span class="legend-item slot-habit"><span class="legend-dot" style="background: var(--etc-border);"></span>한문·외국어·예체능</span>
+          </div>
+
+          <div class="timetable">
+            <div class="time-label">15:00</div>
+            <div class="time-slot slot-rest"><span contenteditable="true">🏠 하교 후 간식 및 오늘 학교 수업 필기 10분 점검</span><span class="slot-tag">복습준비</span></div>
+            <div class="time-label">16:00</div>
+            <div class="time-slot slot-kor"><span contenteditable="true">[주요] 국어 문법(품사) 및 문학 자습서 핵심 정리</span><span class="slot-tag">국어(주요)</span></div>
+            <div class="time-label">17:00</div>
+            <div class="time-slot slot-info"><span contenteditable="true">[내신중요] 정보(파이썬 알고리즘) & 기술·가정 프린트 정리</span><span class="slot-tag">정보·기가</span></div>
+            <div class="time-label">18:00</div>
+            <div class="time-slot slot-rest"><span contenteditable="true">🍽️ 저녁 식사 및 휴식</span><span class="slot-tag">식사</span></div>
+            <div class="time-label">19:00</div>
+            <div class="time-slot slot-math"><span contenteditable="true">[주요] 수학 일차함수·연립방정식 대표 유형 집중 풀이</span><span class="slot-tag">수학(주요)</span></div>
+            <div class="time-label">20:00</div>
+            <div class="time-slot slot-math"><span contenteditable="true">[주요] 수학 중단원 서술형 기출 풀이 및 오답 노트</span><span class="slot-tag">수학심화</span></div>
+            <div class="time-label">21:00</div>
+            <div class="time-slot slot-eng"><span contenteditable="true">[주요] 영어 단원 본문 빈칸 암기 및 어법 기출 체크</span><span class="slot-tag">영어(주요)</span></div>
+            <div class="time-label">22:00</div>
+            <div class="time-slot slot-sci"><span contenteditable="true">[내신중요] 과학 실험 그래프 & 역사·사회·도덕 요점 암기</span><span class="slot-tag">사·과·역·도</span></div>
+            <div class="time-label">23:00</div>
+            <div class="time-slot slot-habit"><span contenteditable="true">[기타] 한문 사자성어·생활외국어 10분 암기 후 취침</span><span class="slot-tag">한문·기타</span></div>
+          </div>
+        </section>
+
+        <div class="right-column">
+          <section class="card">
+            <h2 class="section-title">
+              <span>✅ 오늘의 전 과목 내신 정복 체크리스트</span>
+              <span class="todo-rate-badge" id="rate-mid">달성률 33%</span>
+            </h2>
+            <p class="section-subtitle">주요 과목 → 내신 중요 과목 → 기타·수행 과목 순서로 빈틈없이 완료하세요!</p>
+
+            <ul class="todo-list" id="todo-list-mid">
+              <li class="todo-item">
+                <input type="checkbox" id="mid-t1" class="todo-checkbox" onchange="updateRate('mid')" checked />
+                <label for="mid-t1" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[수학] 일차함수 중단원 발전 문제 20문항 풀이 및 오답 체크</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🏆 주요(🍅×2)</span><span class="todo-subject-pill slot-math">수학</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="mid-t2" class="todo-checkbox" onchange="updateRate('mid')" checked />
+                <label for="mid-t2" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[영어] 3단원 본문 암기 테스트 및 핵심 문법(관계대명사) 정리</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🏆 주요(🍅×1)</span><span class="todo-subject-pill slot-eng">영어</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="mid-t3" class="todo-checkbox" onchange="updateRate('mid')" />
+                <label for="mid-t3" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[국어] 문법 품사의 종류와 특성 학교 유인물 빈칸 채우기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🏆 주요(🍅×1)</span><span class="todo-subject-pill slot-kor">국어</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="mid-t4" class="todo-checkbox" onchange="updateRate('mid')" />
+                <label for="mid-t4" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[과학·역사·사회] 과학 옴의 법칙 공식 & 역사 연표 흐름 암기</span>
+                  <span class="todo-badges"><span class="todo-time-pill">⭐ 내신핵심</span><span class="todo-subject-pill slot-sci">과·역·사</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="mid-t5" class="todo-checkbox" onchange="updateRate('mid')" />
+                <label for="mid-t5" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[정보·기가·도덕] 정보 코딩 수행평가 점검 & 기가·도덕 핵심 요약</span>
+                  <span class="todo-badges"><span class="todo-time-pill">⭐ 내신전략</span><span class="todo-subject-pill slot-info">정보·기가</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="mid-t6" class="todo-checkbox" onchange="updateRate('mid')" />
+                <label for="mid-t6" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[한문·외국어·예체능] 한문 한자성어 5개 암기 & 음악 감상문 제출</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🎨 기타과목</span><span class="todo-subject-pill slot-habit">한문·예체능</span></span>
+                </label>
+              </li>
+            </ul>
+
+            <!-- 중등 전 과목 선택 추가 바 -->
+            <div class="todo-add-row">
+              <select id="subj-select-mid" class="todo-subj-select" aria-label="중등 과목 선택">
+                <optgroup label="🏆 1순위 주요 과목">
+                  <option value="국어|slot-kor">📘 국어</option>
+                  <option value="수학|slot-math">📗 수학</option>
+                  <option value="영어|slot-eng">📕 영어</option>
+                </optgroup>
+                <optgroup label="⭐ 2순위 내신 중요 과목">
+                  <option value="과학|slot-sci">🔬 과학</option>
+                  <option value="역사|slot-sci">🏛️ 역사</option>
+                  <option value="사회|slot-sci">🌍 사회</option>
+                  <option value="도덕|slot-sci">💛 도덕</option>
+                  <option value="정보|slot-info">💻 정보</option>
+                  <option value="기술·가정|slot-info">🛠️ 기술·가정</option>
+                </optgroup>
+                <optgroup label="🎨 3순위 기타·선택·예체능">
+                  <option value="한문|slot-habit">📜 한문</option>
+                  <option value="생활외국어|slot-habit">🗣️ 생활외국어(일·중)</option>
+                  <option value="음악|slot-habit">🎵 음악</option>
+                  <option value="미술|slot-habit">🎨 미술</option>
+                  <option value="체육|slot-habit">⚽ 체육</option>
+                  <option value="환경·보건·진로|slot-habit">🌿 환경·보건·진로</option>
+                </optgroup>
+              </select>
+              <input type="text" id="add-input-mid" class="todo-add-input" placeholder="추가할 내신·수행 할 일을 입력하세요" onkeydown="if(event.key==='Enter') addTodo('mid')" />
+              <button type="button" class="todo-add-btn" onclick="addTodo('mid')">추가</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="section-title">📊 과목군별 내신 회독률 & 기타 과목 수행 관리</h2>
+            <p class="section-subtitle">주요 과목부터 기타 예체능·선택 과목까지 전 과목 올A 달성 현황입니다.</p>
+            <div class="progress-list">
+              <div class="progress-item">
+                <div class="progress-header"><span>🏆 주요 과목 (국어·수학·영어 내신 기출)</span><span style="color: var(--kor-text);">80%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-kor" style="width: 80%;"></div></div>
+              </div>
+              <div class="progress-item">
+                <div class="progress-header"><span>⭐ 내신 중요 탐구 (과학·사회·역사·도덕)</span><span style="color: var(--sci-text);">75%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-sci" style="width: 75%;"></div></div>
+              </div>
+              <div class="progress-item">
+                <div class="progress-header"><span>💻 내신 전략 과목 (정보·기술가정 프린트)</span><span style="color: var(--info-text);">70%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-info" style="width: 70%;"></div></div>
+              </div>
+            </div>
+
+            <div class="etc-check-box">
+              <span class="etc-check-title">🎨 기타 과목 내신·수행평가 놓침 방지 체크 (클릭!)</span>
+              <div class="etc-pills">
+                <label class="etc-pill-label"><input type="checkbox" checked />📜 한문(단어장 암기)</label>
+                <label class="etc-pill-label"><input type="checkbox" checked />🗣️ 생활외국어(회화 수행)</label>
+                <label class="etc-pill-label"><input type="checkbox" />🎵 음악(실기·이론)</label>
+                <label class="etc-pill-label"><input type="checkbox" />🎨 미술(작품 포트폴리오)</label>
+                <label class="etc-pill-label"><input type="checkbox" />⚽ 체육(실기 평가)</label>
+                <label class="etc-pill-label"><input type="checkbox" />🌿 진로·보건·환경</label>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- 하단 3단: 중등 성적 향상 부스터 -->
+      <section class="booster-grid">
+        <div class="card">
+          <h3 class="section-title">🚦 1. 전 과목 메타인지 신호등</h3>
+          <p class="section-subtitle">주요 과목과 내신 암기 과목의 취약 단원을 신호등으로 체크하세요!</p>
+          <div class="signal-list">
+            <div class="signal-item">
+              <span class="signal-topic" contenteditable="true">[수학] 일차함수의 기울기와 도형 넓이 활용</span>
+              <div class="signal-radios">
+                <input type="radio" name="mid-sig-1" id="mid-s1-r" class="sig-radio sig-r" /><label for="mid-s1-r" class="sig-label">🔴 질문 필요</label>
+                <input type="radio" name="mid-sig-1" id="mid-s1-y" class="sig-radio sig-y" checked /><label for="mid-s1-y" class="sig-label">🟡 다시 풀기</label>
+                <input type="radio" name="mid-sig-1" id="mid-s1-g" class="sig-radio sig-g" /><label for="mid-s1-g" class="sig-label">🟢 완벽 이해</label>
+              </div>
+            </div>
+            <div class="signal-item">
+              <span class="signal-topic" contenteditable="true">[역사·정보] 조선 시대 제도사 비교 & 파이썬 반복문</span>
+              <div class="signal-radios">
+                <input type="radio" name="mid-sig-2" id="mid-s2-r" class="sig-radio sig-r" /><label for="mid-s2-r" class="sig-label">🔴 질문 필요</label>
+                <input type="radio" name="mid-sig-2" id="mid-s2-y" class="sig-radio sig-y" /><label for="mid-s2-y" class="sig-label">🟡 다시 풀기</label>
+                <input type="radio" name="mid-sig-2" id="mid-s2-g" class="sig-radio sig-g" checked /><label for="mid-s2-g" class="sig-label">🟢 완벽 이해</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">🛠️ 2. 오답 원인 태그 & 1·3·7일 복습</h3>
+          <p class="section-subtitle">주요 과목 실수와 암기 과목 용어 혼동을 3번 복습으로 완벽히 잡아요!</p>
+          <div class="wrong-list">
+            <div class="wrong-card">
+              <span class="wrong-title" contenteditable="true">[수학] 연립방정식 속력·농도 활용 서술형 식 세우기</span>
+              <div class="wrong-meta-row">
+                <div class="reason-group">
+                  <input type="checkbox" id="mid-r1" class="reason-chk" checked /><label for="mid-r1" class="reason-lbl">개념 부족</label>
+                  <input type="checkbox" id="mid-r2" class="reason-chk" /><label for="mid-r2" class="reason-lbl">계산 실수</label>
+                </div>
+                <div class="cycle-checks">
+                  <label class="cycle-label"><input type="checkbox" checked />1일</label>
+                  <label class="cycle-label"><input type="checkbox" />3일</label>
+                  <label class="cycle-label"><input type="checkbox" />7일</label>
+                </div>
+              </div>
+            </div>
+            <div class="wrong-card">
+              <span class="wrong-title" contenteditable="true">[과학·기가] 전기 회로 저항 병렬연결 계산 및 신재생 에너지 분류</span>
+              <div class="wrong-meta-row">
+                <div class="reason-group">
+                  <input type="checkbox" id="mid-r3" class="reason-chk" checked /><label for="mid-r3" class="reason-lbl">암기 미흡</label>
+                </div>
+                <div class="cycle-checks">
+                  <label class="cycle-label"><input type="checkbox" checked />1일</label>
+                  <label class="cycle-label"><input type="checkbox" checked />3일</label>
+                  <label class="cycle-label"><input type="checkbox" />7일</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">🧠 3. 책 덮고 3줄 백지복습</h3>
+          <p class="section-subtitle">주요 과목 공식이나 암기 과목 핵심 키워드를 안 보고 적어보세요!</p>
+          <div class="recall-box">
+            <textarea class="recall-textarea" placeholder="교과서와 프린트를 덮고 오늘 외운 영문법·수학 공식·역사/과학 키워드를 적어보세요!"></textarea>
+            <div class="review-alert">
+              <span class="review-badge">💡 망각곡선 3일 차 내신 핵심 인출</span>
+              <p class="review-title">Q. 영어 '목적격 관계대명사'를 생략할 수 없는 경우는?</p>
+              <details class="quiz-drawer">
+                <summary>👉 먼저 떠올린 뒤 클릭해서 정답 확인하기</summary>
+                <div class="quiz-answer">목적격 관계대명사(who, which, that)는 단독일 때 생략 가능하지만, <strong>관계대명사 바로 앞에 전치사가 있을 때(예: in which)</strong>는 생략할 수 없어요!</div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- =========================================================
+         [3] 🎓 고등학생용 스터디 플래너 (2022 개정 고교학점제 & 수능 반영)
+         ========================================================= -->
+    <div id="view-high" class="planner-view">
+      <header class="card header-card">
+        <div class="brand-group">
+          <div class="brand-top">
+            <h1 class="brand-logo">🎯 고등 수능·고교학점제 1등급 플래너</h1>
+            <span class="dday-badge" contenteditable="true">D-14 정기고사 / 전국연합 학력평가</span>
+          </div>
+          <div class="daily-promise">
+            ✨ 오늘의 다짐:
+            <span contenteditable="true">"국·수·영 1등급 밸런스를 지키고, 한국사·탐구·정보·교양 세특까지 완벽 관리하기!"</span>
+            <span class="edit-hint">(클릭해 수정)</span>
+          </div>
+        </div>
+
+        <div class="timer-widget">
+          <div class="timer-info">
+            <span class="timer-label">⏱️ 고등 50분 실전 몰입 타이머</span>
+            <span class="timer-display" id="timer-high">50:00</span>
+          </div>
+          <div class="timer-controls">
+            <button type="button" class="timer-btn timer-btn-start" onclick="toggleTimer('high', 50)">▶ 시작/일시정지</button>
+            <button type="button" class="timer-btn timer-btn-reset" onclick="resetTimer('high', 50)">↺ 리셋</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 고등학교 교육과정 전 과목 편제 & 추천 공부 비중 -->
+      <section class="card curriculum-card">
+        <h2 class="section-title">
+          <span>📚 고등학교 전 과목 편제 & 전략적 공부 비중 (2022 개정 고교학점제·수능)</span>
+          <span class="edit-hint">국·수·영에 60% 이상 집중하되, 내신 등급과 대입에 직결되는 탐구·선택·세특 과목을 체계적으로 관리하세요!</span>
+        </h2>
+        <div class="weight-bar-wrap">
+          <div class="weight-bar">
+            <div class="wb-major" style="width: 60%;">🏆 1순위 수능·내신 핵심 국·수·영 (60%)</div>
+            <div class="wb-core" style="width: 30%;">⭐ 2순위 한국사·사탐·과탐 (30%)</div>
+            <div class="wb-etc" style="width: 10%;">🎨 3순위 정보·제2외·교양 (10%)</div>
+          </div>
+        </div>
+        <div class="tier-grid">
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>🏆 1순위: 주요 핵심 과목 (국·수·영)</span>
+              <span class="tier-weight-pill chip-major">비중 60%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-major">📘 공통국어1·2 / 화법과언어 / 독서와작문 / 문학</span>
+              <span class="subj-chip chip-math">📗 공통수학1·2 / 대수 / 미적분Ⅰ·Ⅱ / 확통 / 기하</span>
+              <span class="subj-chip chip-eng">📕 공통영어1·2 / 영어Ⅰ·Ⅱ / 영어독해와작문</span>
+            </div>
+            <p class="tier-desc">수능과 내신 학점 비중이 가장 큰 핵심축! 매일 정해진 시간에 기출 분석과 오답 인출을 진행합니다.</p>
+          </div>
+
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>⭐ 2순위: 내신·수능 필수/선택 탐구 과목</span>
+              <span class="tier-weight-pill chip-core">비중 30%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-core">🇰🇷 한국사1·2</span>
+              <span class="subj-chip chip-core">🌍 통합사회1·2 / 현사윤 / 사문 / 지리 / 세계사 / 정법 / 경제</span>
+              <span class="subj-chip chip-core">🔬 통합과학1·2 / 과탐실험 / 물리학·화학·생명과학·지구과학</span>
+            </div>
+            <p class="tier-desc">고1 통합사회·통합과학 내신 등급 및 고2·3 수능 선택 탐구! 단권화 노트와 자료 해석 훈련이 핵심입니다.</p>
+          </div>
+
+          <div class="tier-box">
+            <div class="tier-head">
+              <span>🎨 3순위: 정보·AI / 제2외국어 / 예체능·교양</span>
+              <span class="tier-weight-pill chip-etc">비중 10%</span>
+            </div>
+            <div class="subject-chips">
+              <span class="subj-chip chip-info">💻 정보 / 인공지능 기초 / 데이터 과학</span>
+              <span class="subj-chip chip-etc">🛠️ 기술·가정 / 로봇과 공학</span>
+              <span class="subj-chip chip-etc">🗣️ 제2외국어·한문</span>
+              <span class="subj-chip chip-etc">🎵 체육·운동과건강·음악·미술</span>
+              <span class="subj-chip chip-etc">📑 논술·진로·창체(세특)</span>
+            </div>
+            <p class="tier-desc">학생부 종합전형(세특 탐구 보고서) 및 고교학점제 이수 학점 관리에 중요한 과목들입니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <main class="dashboard-grid">
+        <section class="card">
+          <h2 class="section-title">
+            <span>⏰ 수능 리듬 & 전 과목 타임블록 (08:00 ~ 22:00)</span>
+            <span class="edit-hint">클릭해 수정</span>
+          </h2>
+          <p class="section-subtitle">국→수→영→한국사·탐구 순서로 큰 비중을 두고, 자투리 시간에 정보·제2외국어·세특을 챙깁니다.</p>
+
+          <div class="subject-legend">
+            <span class="legend-item slot-kor"><span class="legend-dot" style="background: var(--kor-border);"></span>국어 영역</span>
+            <span class="legend-item slot-math"><span class="legend-dot" style="background: var(--math-border);"></span>수학 영역</span>
+            <span class="legend-item slot-eng"><span class="legend-dot" style="background: var(--eng-border);"></span>영어 영역</span>
+            <span class="legend-item slot-sci"><span class="legend-dot" style="background: var(--sci-border);"></span>한국사·사탐·과탐</span>
+            <span class="legend-item slot-info"><span class="legend-dot" style="background: var(--info-border);"></span>정보·AI·기가</span>
+            <span class="legend-item slot-habit"><span class="legend-dot" style="background: var(--etc-border);"></span>제2외·한문·예체능·세특</span>
+          </div>
+
+          <div class="timetable">
+            <div class="time-label">08:00</div>
+            <div class="time-slot slot-kor"><span contenteditable="true">[주요] 공통국어·독서(비문학) 기출 3지문 구조 독해</span><span class="slot-tag">국어(주요)</span></div>
+            <div class="time-label">09:00</div>
+            <div class="time-slot slot-kor"><span contenteditable="true">[주요] 문학·화법과언어 핵심 개념 및 선지 근거 분석</span><span class="slot-tag">국어(주요)</span></div>
+            <div class="time-label">10:00</div>
+            <div class="time-slot slot-math"><span contenteditable="true">[주요] 공통수학·대수·미적분Ⅰ 필수 개념 및 예제</span><span class="slot-tag">수학(주요)</span></div>
+            <div class="time-label">11:00</div>
+            <div class="time-slot slot-math"><span contenteditable="true">[주요] 수학 4점 기출 문항 집중 풀이 및 발상 조건 정리</span><span class="slot-tag">수학4점</span></div>
+            <div class="time-label">12:00</div>
+            <div class="time-slot slot-rest"><span contenteditable="true">🍱 점심 식사 및 가벼운 산책</span><span class="slot-tag">휴식</span></div>
+            <div class="time-label">13:00</div>
+            <div class="time-slot slot-eng"><span contenteditable="true">[주요] 공통영어·영어독해 어휘 50개 암기 및 듣기 실전</span><span class="slot-tag">영어(주요)</span></div>
+            <div class="time-label">14:00</div>
+            <div class="time-slot slot-eng"><span contenteditable="true">[주요] 영어 빈칸·순서·삽입 고난도 기출 구문 분석</span><span class="slot-tag">영어독해</span></div>
+            <div class="time-label">15:00</div>
+            <div class="time-slot slot-sci"><span contenteditable="true">[탐구중요] 한국사 핵심 연표 & 통합사회/사탐 단권화 정리</span><span class="slot-tag">한국사·사탐</span></div>
+            <div class="time-label">16:00</div>
+            <div class="time-slot slot-sci"><span contenteditable="true">[탐구중요] 통합과학 / 물리·화학·생명·지구 기출 자료 해석</span><span class="slot-tag">과학탐구</span></div>
+            <div class="time-label">17:00</div>
+            <div class="time-slot slot-info"><span contenteditable="true">[내신·기타] 정보·인공지능기초 수행평가 및 제2외국어·한문 암기</span><span class="slot-tag">정보·제2외</span></div>
+            <div class="time-label">18:00</div>
+            <div class="time-slot slot-rest"><span contenteditable="true">🍽️ 저녁 식사 및 스트레칭</span><span class="slot-tag">휴식</span></div>
+            <div class="time-label">19:00</div>
+            <div class="time-slot slot-math"><span contenteditable="true">[주요] 수학·확통·기하 오답 문항 해설 덮고 백지 재풀이</span><span class="slot-tag">수학오답</span></div>
+            <div class="time-label">20:00</div>
+            <div class="time-slot slot-kor"><span contenteditable="true">[주요] 국어·영어 취약 유형 미니 모의고사 실전 훈련</span><span class="slot-tag">국·영실전</span></div>
+            <div class="time-label">21:00</div>
+            <div class="time-slot slot-sci"><span contenteditable="true">[복습] 오늘 학습한 수학·탐구 핵심 공식 백지 인출</span><span class="slot-tag">백지인출</span></div>
+            <div class="time-label">22:00</div>
+            <div class="time-slot slot-habit"><span contenteditable="true">[기타] 창체·동아리 진로 세특 주제 메모 및 내일 계획 수립</span><span class="slot-tag">세특·마무리</span></div>
+          </div>
+        </section>
+
+        <div class="right-column">
+          <section class="card">
+            <h2 class="section-title">
+              <span>✅ 오늘의 전 과목 실전 체크리스트</span>
+              <span class="todo-rate-badge" id="rate-high">달성률 33%</span>
+            </h2>
+            <p class="section-subtitle">주요 과목(국·수·영)을 최우선 완수하고 탐구·정보·세특 과제까지 관리하세요.</p>
+
+            <ul class="todo-list" id="todo-list-high">
+              <li class="todo-item">
+                <input type="checkbox" id="hi-t1" class="todo-checkbox" onchange="updateRate('high')" checked />
+                <label for="hi-t1" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[국어] 독서·문학 기출 3지문 구조도 작성 및 오답 선지 근거 기록</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🏆 주요(★최우선)</span><span class="todo-subject-pill slot-kor">국어</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="hi-t2" class="todo-checkbox" onchange="updateRate('high')" checked />
+                <label for="hi-t2" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[수학] 대수·미적분 4점 기출 12문항 풀이 및 조건 해석 노트 작성</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🏆 주요(🍅50분×2)</span><span class="todo-subject-pill slot-math">수학</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="hi-t3" class="todo-checkbox" onchange="updateRate('high')" />
+                <label for="hi-t3" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[영어] 빈칸·순서·삽입 고난도 구문 독해 10문항 및 어휘 50개</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🏆 주요(🍅50분×1)</span><span class="todo-subject-pill slot-eng">영어</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="hi-t4" class="todo-checkbox" onchange="updateRate('high')" />
+                <label for="hi-t4" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[한국사·사탐·과탐] 통합사회·통합과학(물화생지) 도표 자료 해석 15제</span>
+                  <span class="todo-badges"><span class="todo-time-pill">⭐ 탐구핵심</span><span class="todo-subject-pill slot-sci">탐구</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="hi-t5" class="todo-checkbox" onchange="updateRate('high')" />
+                <label for="hi-t5" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[정보·AI·기가] 데이터 과학·인공지능 기초 내신 유인물 및 코딩 실습 점검</span>
+                  <span class="todo-badges"><span class="todo-time-pill">💻 내신·세특</span><span class="todo-subject-pill slot-info">정보·AI</span></span>
+                </label>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" id="hi-t6" class="todo-checkbox" onchange="updateRate('high')" />
+                <label for="hi-t6" class="todo-label">
+                  <span class="todo-text" contenteditable="true">[제2외·한문·교양] 제2외국어 필수 어휘 점검 & 진로 세특 탐구 보고서 초안</span>
+                  <span class="todo-badges"><span class="todo-time-pill">🎨 기타·학점</span><span class="todo-subject-pill slot-habit">제2외·세특</span></span>
+                </label>
+              </li>
+            </ul>
+
+            <!-- 고등 전 과목 선택 추가 바 -->
+            <div class="todo-add-row">
+              <select id="subj-select-high" class="todo-subj-select" aria-label="고등 과목 선택">
+                <optgroup label="🏆 1순위 주요 과목 (국·수·영)">
+                  <option value="국어(공통·독서·문학·화언)|slot-kor">📘 국어 (공통·독서·문학·화언)</option>
+                  <option value="수학(공통·대수·미적·확통·기하)|slot-math">📗 수학 (공통·대수·미적·확통·기하)</option>
+                  <option value="영어(공통·영Ⅰ·영Ⅱ·독해)|slot-eng">📕 영어 (공통·영Ⅰ·Ⅱ·독해)</option>
+                </optgroup>
+                <optgroup label="⭐ 2순위 한국사·사회·과학탐구">
+                  <option value="한국사1·2|slot-sci">🇰🇷 한국사1·2</option>
+                  <option value="통합사회·사탐(윤리·사문·지리·정법·경제)|slot-sci">🌍 통합사회·사회탐구</option>
+                  <option value="통합과학·과탐(물리·화학·생명·지구)|slot-sci">🔬 통합과학·과학탐구</option>
+                </optgroup>
+                <optgroup label="🎨 3순위 정보·제2외국어·예체능·교양">
+                  <option value="정보·AI기초·데이터과학|slot-info">💻 정보·AI기초·데이터과학</option>
+                  <option value="기술·가정·로봇공학|slot-info">🛠️ 기술·가정·공학</option>
+                  <option value="제2외국어·한문|slot-habit">🗣️ 제2외국어·한문</option>
+                  <option value="체육·음악·미술|slot-habit">🎵 체육·운동과건강·음악·미술</option>
+                  <option value="논술·진로·창체(세특)|slot-habit">📑 논술·교양·창체(세특)</option>
+                </optgroup>
+              </select>
+              <input type="text" id="add-input-high" class="todo-add-input" placeholder="추가할 과제를 입력하고 엔터를 누르세요" onkeydown="if(event.key==='Enter') addTodo('high')" />
+              <button type="button" class="todo-add-btn" onclick="addTodo('high')">추가</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="section-title">📊 과목군별 기출 회독률 & 고교학점제 관리</h2>
+            <p class="section-subtitle">주요 영역 회독률과 탐구·기타 학점 이수 과목을 빈틈없이 관리합니다.</p>
+            <div class="progress-list">
+              <div class="progress-item">
+                <div class="progress-header"><span>🏆 주요 영역 (국어·수학·영어 기출 분석)</span><span style="color: var(--kor-text);">82%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-kor" style="width: 82%;"></div></div>
+              </div>
+              <div class="progress-item">
+                <div class="progress-header"><span>⭐ 한국사 & 사회·과학탐구 (단권화·자료해석)</span><span style="color: var(--sci-text);">75%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-sci" style="width: 75%;"></div></div>
+              </div>
+              <div class="progress-item">
+                <div class="progress-header"><span>💻 정보·AI·기술가정 내신 및 수행 관리</span><span style="color: var(--info-text);">80%</span></div>
+                <div class="progress-track"><div class="progress-fill fill-info" style="width: 80%;"></div></div>
+              </div>
+            </div>
+
+            <div class="etc-check-box">
+              <span class="etc-check-title">🎨 기타 선택 과목 & 학생부 세특 체크리스트 (클릭!)</span>
+              <div class="etc-pills">
+                <label class="etc-pill-label"><input type="checkbox" checked />💻 정보·AI(코딩 세특)</label>
+                <label class="etc-pill-label"><input type="checkbox" checked />🗣️ 제2외국어·한문(어휘)</label>
+                <label class="etc-pill-label"><input type="checkbox" />🔬 과학탐구실험(보고서)</label>
+                <label class="etc-pill-label"><input type="checkbox" />🎵 체육·음악·미술(실기)</label>
+                <label class="etc-pill-label"><input type="checkbox" />📑 자율·동아리·진로(세특)</label>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- 하단 3단: 고등 성적 향상 부스터 -->
+      <section class="booster-grid">
+        <div class="card">
+          <h3 class="section-title">🚦 1. 전 과목 메타인지 신호등</h3>
+          <p class="section-subtitle">주요 과목 킬러 유형부터 탐구·정보 개념까지 엄격히 자가진단하세요.</p>
+          <div class="signal-list">
+            <div class="signal-item">
+              <span class="signal-topic" contenteditable="true">[수학] 삼각함수 도형 사인·코사인법칙 결합 추론</span>
+              <div class="signal-radios">
+                <input type="radio" name="hi-sig-1" id="hi-s1-r" class="sig-radio sig-r" /><label for="hi-s1-r" class="sig-label">🔴 발상 막힘</label>
+                <input type="radio" name="hi-sig-1" id="hi-s1-y" class="sig-radio sig-y" checked /><label for="hi-s1-y" class="sig-label">🟡 조건 놓침</label>
+                <input type="radio" name="hi-sig-1" id="hi-s1-g" class="sig-radio sig-g" /><label for="hi-s1-g" class="sig-label">🟢 완벽 체화</label>
+              </div>
+            </div>
+            <div class="signal-item">
+              <span class="signal-topic" contenteditable="true">[사탐·과탐] 화학 양적 관계 및 사회문화 도표 통계 분석</span>
+              <div class="signal-radios">
+                <input type="radio" name="hi-sig-2" id="hi-s2-r" class="sig-radio sig-r" /><label for="hi-s2-r" class="sig-label">🔴 발상 막힘</label>
+                <input type="radio" name="hi-sig-2" id="hi-s2-y" class="sig-radio sig-y" /><label for="hi-s2-y" class="sig-label">🟡 조건 놓침</label>
+                <input type="radio" name="hi-sig-2" id="hi-s2-g" class="sig-radio sig-g" checked /><label for="hi-s2-g" class="sig-label">🟢 완벽 체화</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">🛠️ 2. 오답 패인 분석 & 1·3·7일 인출</h3>
+          <p class="section-subtitle">국·수·영·탐 기출 오답은 1일·3일·7일 간격으로 백지에 3번 다시 풀어 체화합니다.</p>
+          <div class="wrong-list">
+            <div class="wrong-card">
+              <span class="wrong-title" contenteditable="true">[수학] 수열의 귀납적 정의 역추적 케이스 분류 누락</span>
+              <div class="wrong-meta-row">
+                <div class="reason-group">
+                  <input type="checkbox" id="hi-r1" class="reason-chk" checked /><label for="hi-r1" class="reason-lbl">조건 누락</label>
+                  <input type="checkbox" id="hi-r2" class="reason-chk" /><label for="hi-r2" class="reason-lbl">시간 부족</label>
+                </div>
+                <div class="cycle-checks">
+                  <label class="cycle-label"><input type="checkbox" checked />1일</label>
+                  <label class="cycle-label"><input type="checkbox" checked />3일</label>
+                  <label class="cycle-label"><input type="checkbox" />7일</label>
+                </div>
+              </div>
+            </div>
+            <div class="wrong-card">
+              <span class="wrong-title" contenteditable="true">[영어·탐구] 빈칸 이중 부정 오독 & 생명과학 유전 가계도 해석</span>
+              <div class="wrong-meta-row">
+                <div class="reason-group">
+                  <input type="checkbox" id="hi-r3" class="reason-chk" checked /><label for="hi-r3" class="reason-lbl">논리 오독</label>
+                </div>
+                <div class="cycle-checks">
+                  <label class="cycle-label"><input type="checkbox" checked />1일</label>
+                  <label class="cycle-label"><input type="checkbox" />3일</label>
+                  <label class="cycle-label"><input type="checkbox" />7일</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">🧠 3. 백지복습(Active Recall) 노트</h3>
+          <p class="section-subtitle">주요 과목 공식이나 탐구·한국사 개념을 안 보고 적은 뒤 정답과 대조하세요.</p>
+          <div class="recall-box">
+            <textarea class="recall-textarea" placeholder="해설지나 개념서를 덮고, 오늘 학습한 국·수·영·탐 핵심 개념을 백지에 인출해 보세요."></textarea>
+            <div class="review-alert">
+              <span class="review-badge">💡 에빙하우스 망각곡선 3일 차 인출</span>
+              <p class="review-title">Q. 도형 문항에서 사인법칙 vs 코사인법칙 선택 기준은?</p>
+              <details class="quiz-drawer">
+                <summary>👉 백지에 먼저 떠올린 뒤 클릭해서 정답 대조하기</summary>
+                <div class="quiz-answer">
+                  <strong>1) 사인법칙:</strong> 외접원 반지름 $R$ 언급 시, 또는 '마주 보는 각-변' 한 쌍이 주어질 때 적용!<br />
+                  <strong>2) 코사인법칙:</strong> 두 변과 끼인각(SAS) 또는 세 변(SSS)의 길이 비가 주어질 때 적용!
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 타이머, 달성률 자동 계산, 전 과목 선택 할 일 추가 스크립트 -->
+  <script>
+    const timers = {
+      elem: { sec: 15 * 60, interval: null },
+      mid: { sec: 25 * 60, interval: null },
+      high: { sec: 50 * 60, interval: null }
+    };
+
+    function formatTime(totalSec) {
+      const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const s = String(totalSec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function toggleTimer(level, defaultMin) {
+      const t = timers[level];
+      const display = document.getElementById(`timer-${level}`);
+      if (t.interval) {
+        clearInterval(t.interval);
+        t.interval = null;
+      } else {
+        t.interval = setInterval(() => {
+          if (t.sec > 0) {
+            t.sec--;
+            display.textContent = formatTime(t.sec);
+          } else {
+            clearInterval(t.interval);
+            t.interval = null;
+            display.textContent = "완료! 👏";
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer(level, defaultMin) {
+      const t = timers[level];
+      if (t.interval) {
+        clearInterval(t.interval);
+        t.interval = null;
+      }
+      t.sec = defaultMin * 60;
+      document.getElementById(`timer-${level}`).textContent = formatTime(t.sec);
+    }
+
+    function updateRate(level) {
+      const list = document.getElementById(`todo-list-${level}`);
+      const checks = list.querySelectorAll('.todo-checkbox');
+      const checked = list.querySelectorAll('.todo-checkbox:checked');
+      const pct = checks.length ? Math.round((checked.length / checks.length) * 100) : 0;
+      document.getElementById(`rate-${level}`).textContent = `달성률 ${pct}%`;
+    }
+
+    function addTodo(level) {
+      const input = document.getElementById(`add-input-${level}`);
+      const select = document.getElementById(`subj-select-${level}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      const [subjName, slotClass] = select.value.split('|');
+      const list = document.getElementById(`todo-list-${level}`);
+      const id = `${level}-custom-${Date.now()}`;
+      const li = document.createElement('li');
+      li.className = 'todo-item';
+      li.innerHTML = `
+        <input type="checkbox" id="${id}" class="todo-checkbox" onchange="updateRate('${level}')" />
+        <label for="${id}" class="todo-label">
+          <span class="todo-text" contenteditable="true">[${subjName}] ${text}</span>
+          <span class="todo-badges">
+            <span class="todo-subject-pill ${slotClass}">${subjName}</span>
+          </span>
+        </label>
+      `;
+      list.appendChild(li);
+      input.value = '';
+      updateRate(level);
+    }
+  </script>
+</body>
+</html>
